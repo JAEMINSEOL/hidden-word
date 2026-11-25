@@ -1,0 +1,20 @@
+name = "hidden-word"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 사이트(web/ 폴더)를 같은 Worker에서 정적 파일로 함께 배포한다.
+# 파일이 있는 주소는 정적 파일을, 없는 주소(/similarity, /health)는 Worker 코드를 실행한다.
+[assets]
+directory = "../web"
+
+[vars]
+# 다른 주소에서 API를 부를 때만 필요하다. 사이트와 API가 같은 주소라 배포 환경에서는 비워 둬도 된다.
+# 로컬에서 실험실을 따로 띄울 때를 위해 개발 주소만 넣어 둔다.
+ALLOWED_ORIGINS = "http://localhost:8000"
+
+# 단어 쌍 점수 캐시(선택). 아래 명령으로 만든 뒤 id를 채우고 주석을 푼다.
+#   npx wrangler kv namespace create SIM_CACHE
+# [[kv_namespaces]]
+# binding = "SIM_CACHE"
+# id = "여기에_ID"

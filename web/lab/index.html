@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>유사도 실험실</title>
+<meta name="robots" content="noindex">
+<style>
+  :root {
+    --bg: #f6f5f2; --surface: #ffffff; --surface-2: #efede8; --text: #1d1c1a; --muted: #6b6862;
+    --border: #dcd9d2; --accent: #c2410c; --accent-text: #ffffff;
+    --ok: #15803d; --warn: #b45309; --bad: #b91c1c;
+    --opus: #7c3aed; --haiku: #0e7490;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141312; --surface: #1d1c1a; --surface-2: #272522; --text: #ecebe8; --muted: #a29f98;
+      --border: #3a3733; --accent: #fb923c; --accent-text: #1d1c1a;
+      --ok: #4ade80; --warn: #fbbf24; --bad: #f87171; --opus: #a78bfa; --haiku: #22d3ee;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141312; --surface: #1d1c1a; --surface-2: #272522; --text: #ecebe8; --muted: #a29f98;
+    --border: #3a3733; --accent: #fb923c; --accent-text: #1d1c1a;
+    --ok: #4ade80; --warn: #fbbf24; --bad: #f87171; --opus: #a78bfa; --haiku: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  h2 { font-size: 15px; margin: 0 0 12px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input[type=text], input[type=password], input[type=url], textarea, select {
+    width: 100%; padding: 10px 12px; font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .check { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: var(--text); margin: 0; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  button {
+    font: inherit; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text); padding: 8px 12px; cursor: pointer;
+  }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; padding: 12px 18px; }
+  button:disabled { opacity: .5; cursor: default; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .stats { display: grid; gap: 10px; grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .stats { grid-template-columns: 1fr 1fr; } }
+  .stat { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .stat h3 { margin: 0 0 8px; font-size: 14px; }
+  .stat dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 13px; }
+  .stat dt { color: var(--muted); } .stat dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .opus { color: var(--opus); } .haiku { color: var(--haiku); }
+  .results { display: grid; gap: 8px; }
+  .card { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .card-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .word { font-weight: 700; font-size: 16px; }
+  .band { font-size: 12px; color: var(--muted); }
+  .models { display: grid; gap: 6px; margin-top: 8px; }
+  @media (min-width: 640px) { .models { grid-template-columns: 1fr 1fr; } }
+  .m { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  .m-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .score { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tag { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid currentColor; margin-left: 4px; }
+  .in { color: var(--ok); } .out { color: var(--warn); } .err { color: var(--bad); }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .reason { margin-top: 4px; }
+  .status { font-size: 13px; color: var(--muted); min-height: 1.5em; margin-top: 10px; }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 16px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>유사도 실험실</h1>
+  <p class="sub">같은 단어 쌍을 Claude Opus 5.5와 Haiku 5.5로 채점해 점수 품질과 비용을 비교합니다.</p>
+
+  <section>
+    <h2>연결</h2>
+    <div class="grid two">
+      <div>
+        <label for="workerUrl">Worker 주소 (비우면 이 사이트 주소)</label>
+        <input id="workerUrl" type="url" placeholder="비워 두면 현재 사이트">
+      </div>
+      <div>
+        <label for="labToken">실험실 토큰</label>
+        <input id="labToken" type="password" autocomplete="off" placeholder="LAB_TOKEN 값">
+      </div>
+    </div>
+    <p class="hint">이 두 값은 이 브라우저에만 저장됩니다.</p>
+  </section>
+
+  <section>
+    <h2>단어</h2>
+    <div class="presets" id="presets"></div>
+    <p class="hint">예시 세트를 누르면 정답, 힌트 단어, 기대 점수 구간이 채워집니다.</p>
+    <div class="grid" style="margin-top:12px">
+      <div>
+        <label for="target">정답</label>
+        <input id="target" type="text" placeholder="예: 바다">
+      </div>
+      <div>
+        <label for="words">힌트 단어 (한 줄에 하나, 기대 구간은 "단어 80-94"처럼 뒤에 적기)</label>
+        <textarea id="words" placeholder="파도 80-94&#10;해변&#10;소금"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>설정</h2>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="useOpus" checked> <span class="opus">Opus 5.5</span></label>
+      <label class="check"><input type="checkbox" id="useHaiku" checked> <span class="haiku">Haiku 5.5</span></label>
+      <label class="check"><input type="checkbox" id="properNouns"> 고유명사 허용</label>
+      <label class="check"><input type="checkbox" id="noCache" checked> 캐시 건너뛰기</label>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="check" for="repeat">반복 횟수</label>
+      <select id="repeat" style="width:auto">
+        <option value="1">1회</option>
+        <option value="2">2회</option>
+        <option value="3" selected>3회 (점수 흔들림 측정)</option>
+      </select>
+    </div>
+    <p class="hint">반복은 캐시를 건너뛸 때만 의미가 있습니다. 같은 쌍을 여러 번 채점해 점수가 얼마나 흔들리는지 봅니다.</p>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="run">채점 시작</button>
+      <button id="stop" disabled>중지</button>
+    </div>
+    <div class="status" id="status" role="status"></div>
+  </section>
+
+  <section>
+    <h2>요약</h2>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section>
+    <h2>결과</h2>
+    <div class="results" id="results"><div class="empty">아직 결과가 없습니다.</div></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const MODELS = { opus: { label: "Opus 5.5", cls: "opus" }, haiku: { label: "Haiku 5.5", cls: "haiku" } };
+  // 한 판 기준 호출 수 가정 (기획안: 평균 150회, 최악 360회)
+  const CALLS_PER_GAME = 150, CALLS_WORST = 360;
+
+  // 기대 구간은 채점 기준표를 따른 사람의 판단이다. 프롬프트 예시에는 없는 단어로 골랐다.
+  const PRESETS = [
+    { name: "바다", target: "바다", pn: false, words: "해양 95-99\n파도 80-94\n해변 80-94\n소금 60-79\n여름 40-59\n고래 60-79\n수영장 40-59\n책상 0-19\n달리다 invalid" },
+    { name: "학교", target: "학교", pn: false, words: "학원 80-94\n교실 80-94\n선생님 80-94\n졸업 60-79\n가방 40-59\n급식 60-79\n우주 0-19\n빨리 invalid" },
+    { name: "커피", target: "커피", pn: false, words: "가배 95-99\n원두 80-94\n카페 80-94\n아메리카노 80-94\n졸음 40-59\n우유 40-59\n등산 0-19" },
+    { name: "고유명사 금지", target: "축구", pn: false, words: "풋볼 95-99\n월드컵 80-94\n공 60-79\n손흥민 invalid\n맨유 invalid\n잔디 40-59" },
+    { name: "고유명사 허용", target: "축구", pn: true, words: "손흥민 60-79\n메시 60-79\n프리미어리그 80-94\n맨유 60-79\n삼성 0-39\n아이유 0-19" },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k) { try { return localStorage.getItem(k) ?? ""; } catch { return ""; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  };
+
+  $("workerUrl").value = store.get("lab.workerUrl");
+  $("labToken").value = store.get("lab.labToken");
+  $("workerUrl").addEventListener("change", (e) => store.set("lab.workerUrl", e.target.value.trim()));
+  $("labToken").addEventListener("change", (e) => store.set("lab.labToken", e.target.value));
+
+  for (const p of PRESETS) {
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.addEventListener("click", () => { $("target").value = p.target; $("words").value = p.words; $("properNouns").checked = p.pn; });
+    $("presets").appendChild(b);
+  }
+
+  function parseLines(text) {
+    return text.split("\n").map((l) => l.trim()).filter(Boolean).map((line) => {
+      const [word, band] = line.split(/\s+/);
+      if (!band) return { word, band: null };
+      if (band === "invalid") return { word, band: { invalid: true } };
+      const m = band.match(/^(\d+)-(\d+)$/);
+      return { word, band: m ? { min: +m[1], max: +m[2] } : null };
+    });
+  }
+
+  function bandLabel(band) {
+    if (!band) return "";
+    return band.invalid ? "기대: 무효" : `기대: ${band.min}~${band.max}`;
+  }
+
+  /** 기대 구간 안에 들었는지. 기대값이 없으면 null */
+  function inBand(band, r) {
+    if (!band || !r || r.error) return null;
+    if (band.invalid) return r.valid === false;
+    return r.valid && r.score >= band.min && r.score <= band.max;
+  }
+
+  let rows = [];
+  let stopRequested = false;
+
+  const fmtUsd = (n) => n == null ? "-" : n < 0.01 ? `$${n.toFixed(5)}` : `$${n.toFixed(3)}`;
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function renderResults() {
+    const el = $("results");
+    if (!rows.length) { el.innerHTML = '<div class="empty">아직 결과가 없습니다.</div>'; return; }
+    el.innerHTML = rows.map((row) => {
+      const cells = Object.keys(row.runs).map((mk) => {
+        const runs = row.runs[mk];
+        const ok = runs.filter((r) => !r.error);
+        const last = runs[runs.length - 1];
+        if (!last) return `<div class="m"><span class="${MODELS[mk].cls}">${MODELS[mk].label}</span> <span class="meta">대기 중</span></div>`;
+        if (!ok.length) return `<div class="m"><span class="${MODELS[mk].cls}">${MODELS[mk].label}</span><div class="err reason">${esc(last.error)}</div></div>`;
+        const scores = ok.map((r) => r.valid ? r.score : "무효");
+        const nums = ok.filter((r) => r.valid).map((r) => r.score);
+        const spread = nums.length > 1 ? Math.max(...nums) - Math.min(...nums) : null;
+        const first = ok[0];
+        const verdict = inBand(row.band, first);
+        const tag = verdict == null ? "" : verdict ? '<span class="tag in">구간 안</span>' : '<span class="tag out">구간 밖</span>';
+        const avgLatency = Math.round(ok.reduce((s, r) => s + (r.latencyMs || 0), 0) / ok.length);
+        const cost = ok.reduce((s, r) => s + (r.costUsd || 0), 0) / ok.length;
+        const served = first.servedBy && !first.servedBy.startsWith("claude-" + (mk === "opus" ? "opus-5-5" : "haiku-5-5")) && first.servedBy !== "exact-match"
+          ? ` · 대체 모델: ${esc(first.servedBy)}` : "";
+        return `<div class="m">
+          <div class="m-top"><span class="${MODELS[mk].cls}">${MODELS[mk].label}${tag}</span><span class="score">${first.valid ? first.score : "무효"}</span></div>
+          <div class="meta">${runs.length > 1 ? `반복: ${scores.join(" / ")}${spread != null ? ` (차이 ${spread})` : ""} · ` : ""}${avgLatency}ms · ${fmtUsd(cost)}/회${first.cached ? " · 캐시" : ""}${served}</div>
+          <div class="reason">${esc(first.reason || "")}</div>
+        </div>`;
+      }).join("");
+      return `<div class="card"><div class="card-head"><span class="word">${esc(row.word)}</span><span class="band">${bandLabel(row.band)}</span></div><div class="models">${cells}</div></div>`;
+    }).join("");
+  }
+
+  function renderStats() {
+    const used = Object.keys(MODELS).filter((mk) => rows.some((r) => r.runs[mk]?.length));
+    if (!used.length) { $("stats").innerHTML = '<div class="empty">채점을 시작하면 모델별 요약이 나옵니다.</div>'; return; }
+    $("stats").innerHTML = used.map((mk) => {
+      const all = rows.flatMap((r) => (r.runs[mk] || []).filter((x) => !x.error && !x.cached && x.servedBy !== "exact-match"));
+      const errors = rows.flatMap((r) => (r.runs[mk] || []).filter((x) => x.error)).length;
+      const n = all.length;
+      const total = all.reduce((s, r) => s + (r.costUsd || 0), 0);
+      const avg = n ? total / n : 0;
+      const lat = n ? Math.round(all.reduce((s, r) => s + r.latencyMs, 0) / n) : 0;
+      const inTok = all.reduce((s, r) => s + (r.usage?.input_tokens || 0) + (r.usage?.cache_read_input_tokens || 0) + (r.usage?.cache_creation_input_tokens || 0), 0);
+      const readTok = all.reduce((s, r) => s + (r.usage?.cache_read_input_tokens || 0), 0);
+      const outTok = n ? Math.round(all.reduce((s, r) => s + (r.usage?.output_tokens || 0), 0) / n) : 0;
+      const judged = rows.map((r) => inBand(r.band, (r.runs[mk] || []).find((x) => !x.error))).filter((v) => v != null);
+      const agree = judged.length ? `${judged.filter(Boolean).length}/${judged.length}` : "-";
+      const spreads = rows.map((r) => (r.runs[mk] || []).filter((x) => !x.error && x.valid).map((x) => x.score))
+        .filter((s) => s.length > 1).map((s) => Math.max(...s) - Math.min(...s));
+      const avgSpread = spreads.length ? (spreads.reduce((a, b) => a + b, 0) / spreads.length).toFixed(1) : "-";
+      return `<div class="stat"><h3 class="${MODELS[mk].cls}">${MODELS[mk].label}</h3><dl>
+        <dt>기대 구간 일치</dt><dd>${agree}</dd>
+        <dt>반복 시 평균 점수 차이</dt><dd>${avgSpread}</dd>
+        <dt>실제 호출 수</dt><dd>${n}${errors ? ` (오류 ${errors})` : ""}</dd>
+        <dt>1회 평균 비용</dt><dd>${fmtUsd(avg)}</dd>
+        <dt>한 판 예상 (${CALLS_PER_GAME}회)</dt><dd>${fmtUsd(avg * CALLS_PER_GAME)}</dd>
+        <dt>한 판 최악 (${CALLS_WORST}회)</dt><dd>${fmtUsd(avg * CALLS_WORST)}</dd>
+        <dt>평균 응답 시간</dt><dd>${lat}ms</dd>
+        <dt>평균 출력 토큰</dt><dd>${outTok}</dd>
+        <dt>캐시 적중 비율(입력)</dt><dd>${inTok ? Math.round((readTok / inTok) * 100) + "%" : "-"}</dd>
+        <dt>총 비용</dt><dd>${fmtUsd(total)}</dd>
+      </dl></div>`;
+    }).join("");
+  }
+
+  async function callWorker(url, token, payload) {
+    const started = performance.now();
+    try {
+      const res = await fetch(url.replace(/\/+$/, "") + "/similarity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Lab-Token": token },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({ error: `응답을 읽지 못했습니다 (HTTP ${res.status})` }));
+      if (!res.ok) return { error: data.error || `HTTP ${res.status}` };
+      return { ...data, latencyMs: data.latencyMs || Math.round(performance.now() - started) };
+    } catch (e) {
+      return { error: "Worker에 연결하지 못했습니다. 주소와 CORS 설정(ALLOWED_ORIGINS)을 확인하세요." };
+    }
+  }
+
+  $("stop").addEventListener("click", () => { stopRequested = true; });
+
+  $("run").addEventListener("click", async () => {
+    // 배포 환경에서는 사이트와 API가 같은 주소라 비워 두면 된다.
+    const url = $("workerUrl").value.trim() || location.origin;
+    const token = $("labToken").value;
+    const target = $("target").value.trim();
+    const items = parseLines($("words").value);
+    const models = Object.keys(MODELS).filter((mk) => $(mk === "opus" ? "useOpus" : "useHaiku").checked);
+    const noCache = $("noCache").checked;
+    const repeat = noCache ? Number($("repeat").value) : 1;
+    if (!token) return ($("status").textContent = "실험실 토큰을 입력하세요.");
+    if (!target || !items.length) return ($("status").textContent = "정답과 힌트 단어를 입력하세요.");
+    if (!models.length) return ($("status").textContent = "모델을 하나 이상 고르세요.");
+
+    store.set("lab.workerUrl", $("workerUrl").value.trim()); store.set("lab.labToken", token);
+    rows = items.map((it) => ({ ...it, runs: Object.fromEntries(models.map((m) => [m, []])) }));
+    renderResults(); renderStats();
+    stopRequested = false;
+    $("run").disabled = true; $("stop").disabled = false;
+
+    const total = items.length * models.length * repeat;
+    let done = 0;
+    outer:
+    for (const row of rows) {
+      for (let i = 0; i < repeat; i++) {
+        // 같은 단어를 두 모델에 동시에 보낸다. 단어끼리는 순서대로 보내 요청 한도를 넘지 않게 한다.
+        if (stopRequested) break outer;
+        const results = await Promise.all(models.map((mk) =>
+          callWorker(url, token, { target, word: row.word, model: mk, allowProperNouns: $("properNouns").checked, noCache })));
+        models.forEach((mk, idx) => row.runs[mk].push(results[idx]));
+        done += models.length;
+        $("status").textContent = `${done} / ${total} 완료`;
+        renderResults(); renderStats();
+      }
+    }
+    $("status").textContent = stopRequested ? `중지됨 (${done} / ${total})` : `완료 (${done}회 호출)`;
+    $("run").disabled = false; $("stop").disabled = true;
+  });
+
+  renderStats();
+})();
+</script>
+</body>
+</html>

@@ -32,14 +32,15 @@
 ## 3. 아키텍처
 
 ```
-[GitHub Pages: 프론트]
+[브라우저: 사이트 화면]  ← Cloudflare Worker가 정적 파일로 함께 서비스
      │  ① 방·플레이어 상태 동기화          ② 힌트 단어 제출 (Firebase 로그인 토큰 첨부)
      ▼                                      ▼
-[Firebase Realtime DB] ◀──결과 기록── [Cloudflare Worker] ──▶ [Claude API]
+[Firebase Realtime DB] ◀──결과 기록── [Cloudflare Worker API] ──▶ [Claude API]
    (방, 점수, 공개 정보)                 (API 키, 정답, 판정 로직)
 ```
 
-- **프론트:** Vite + React(또는 순수 JS). GitHub Actions가 Pages로 자동 배포한다.
+- **레포:** 프라이빗 하나로 운영한다. 봉투 단어, 채점 프롬프트, 서버 로직이 공개되지 않게 하기 위해서다.
+- **프론트:** Vite + React(또는 순수 JS). API와 같은 Cloudflare Worker가 정적 파일로 서비스하고, GitHub Actions가 자동 배포한다. (GitHub Pages는 무료 계정에서 프라이빗 레포를 지원하지 않아 쓰지 않는다.)
 - **실시간 동기화:** Firebase Realtime Database와 익명 로그인.
 - **서버 함수:** Cloudflare Workers 무료 요금제(하루 10만 요청). API 키는 정적 사이트에 둘 수 없으므로 Worker가 보관한다.
 - **정답 보안:** 정답은 클라이언트가 읽을 수 없는 DB 경로에 두고, 유사도 계산과 정답 판정은 Worker에서만 한다.
@@ -79,7 +80,7 @@ simCache/{정답}/{단어}: { score, valid }       // 같은 쌍은 항상 같�
 
 - **배너 수익:** 한 판에 6명, 노출 약 60회, CPM 약 $1로 잡으면 **한 판당 약 $0.06**. Haiku라면 비용이 메워지고, Opus로는 메워지지 않는다.
 - **1단계, 하단 배너:**
-  - AdSense는 `github.io` 하위 도메인 승인이 까다로운 편이라 커스텀 도메인을 연결한다. 대안은 카카오 애드핏.
+  - AdSense는 `workers.dev` 같은 공용 하위 도메인으로는 승인이 까다로운 편이라 커스텀 도메인을 연결한다. 대안은 카카오 애드핏.
   - 개인정보처리방침, 이용약관, 문의 페이지를 둔다.
   - 라운드가 바뀔 때 배너를 새로 고친다. 모바일에서는 입력창과 겹치지 않게 배치한다.
 - **2단계, 유료 판매 (수요 확인 후):**
