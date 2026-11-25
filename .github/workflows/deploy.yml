@@ -1,10 +1,11 @@
-name: Deploy Worker
-# main에 worker 코드가 바뀌면 Cloudflare에 배포한다. Actions 탭에서 수동 실행도 된다.
+name: Deploy
+# main에 worker 코드나 사이트(web/)가 바뀌면 Cloudflare에 배포한다. Actions 탭에서 수동 실행도 된다.
+# Worker 하나가 사이트(정적 파일)와 채점 API를 함께 서비스한다.
 # 필요한 저장소 Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
 on:
   push:
     branches: [main]
-    paths: ["worker/**", ".github/workflows/deploy-worker.yml"]
+    paths: ["worker/**", "web/**", ".github/workflows/deploy.yml"]
   workflow_dispatch:
 concurrency: deploy-worker
 jobs:

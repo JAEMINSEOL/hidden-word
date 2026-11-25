@@ -9,7 +9,7 @@ export interface Env {
   ANTHROPIC_API_KEY: string;
   /** M1 실험실 접근 토큰. 없으면 모든 요청을 거절한다. `wrangler secret put LAB_TOKEN` */
   LAB_TOKEN?: string;
-  /** 허용할 프론트 주소(쉼표로 구분). 예: "https://jaeminseol.github.io,http://localhost:5173" */
+  /** 허용할 프론트 주소(쉼표로 구분). 사이트와 API가 같은 주소면 필요 없다. 예: "http://localhost:8000" */
   ALLOWED_ORIGINS?: string;
   /** (선택) 단어 쌍 점수 캐시. 없으면 캐시 없이 동작한다. */
   SIM_CACHE?: KVNamespace;

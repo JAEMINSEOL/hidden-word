@@ -86,8 +86,8 @@
     <h2>연결</h2>
     <div class="grid two">
       <div>
-        <label for="workerUrl">Worker 주소</label>
-        <input id="workerUrl" type="url" placeholder="https://hidden-word-similarity.이름.workers.dev">
+        <label for="workerUrl">Worker 주소 (비우면 이 사이트 주소)</label>
+        <input id="workerUrl" type="url" placeholder="비워 두면 현재 사이트">
       </div>
       <div>
         <label for="labToken">실험실 토큰</label>
@@ -291,18 +291,19 @@
   $("stop").addEventListener("click", () => { stopRequested = true; });
 
   $("run").addEventListener("click", async () => {
-    const url = $("workerUrl").value.trim();
+    // 배포 환경에서는 사이트와 API가 같은 주소라 비워 두면 된다.
+    const url = $("workerUrl").value.trim() || location.origin;
     const token = $("labToken").value;
     const target = $("target").value.trim();
     const items = parseLines($("words").value);
     const models = Object.keys(MODELS).filter((mk) => $(mk === "opus" ? "useOpus" : "useHaiku").checked);
     const noCache = $("noCache").checked;
     const repeat = noCache ? Number($("repeat").value) : 1;
-    if (!url || !token) return ($("status").textContent = "Worker 주소와 실험실 토큰을 입력하세요.");
+    if (!token) return ($("status").textContent = "실험실 토큰을 입력하세요.");
     if (!target || !items.length) return ($("status").textContent = "정답과 힌트 단어를 입력하세요.");
     if (!models.length) return ($("status").textContent = "모델을 하나 이상 고르세요.");
 
-    store.set("lab.workerUrl", url); store.set("lab.labToken", token);
+    store.set("lab.workerUrl", $("workerUrl").value.trim()); store.set("lab.labToken", token);
     rows = items.map((it) => ({ ...it, runs: Object.fromEntries(models.map((m) => [m, []])) }));
     renderResults(); renderStats();
     stopRequested = false;
