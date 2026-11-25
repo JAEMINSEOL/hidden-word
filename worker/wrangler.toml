@@ -1,0 +1,14 @@
+name = "hidden-word-similarity"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# 실험실 페이지를 띄울 주소. GitHub Pages 주소와 로컬 개발 주소를 쉼표로 구분해 넣는다.
+ALLOWED_ORIGINS = "https://jaeminseol.github.io,http://localhost:8000"
+
+# 단어 쌍 점수 캐시(선택). 아래 명령으로 만든 뒤 id를 채우고 주석을 푼다.
+#   npx wrangler kv namespace create SIM_CACHE
+# [[kv_namespaces]]
+# binding = "SIM_CACHE"
+# id = "여기에_ID"
